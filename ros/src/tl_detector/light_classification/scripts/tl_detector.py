@@ -131,7 +131,6 @@ if __name__ == '__main__':
     for i, image_path in enumerate(image_paths, start=1):
         img = Image.open(image_path)
         img = np.asarray(img, dtype="uint8")
-        img_copy = np.copy(img)
         print('Processing (%d/%d): %s' % (i, len(image_paths), image_path))
 
         # ignore the first image for calculating average processing time
