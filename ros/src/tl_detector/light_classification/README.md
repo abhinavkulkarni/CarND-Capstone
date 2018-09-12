@@ -79,6 +79,7 @@ Trainable params: 45,348
 Non-trainable params: 0
 
 **Model Training**
+
 ![Alt text](scripts/plot.png "Loss curves")
 
 **Usage**
