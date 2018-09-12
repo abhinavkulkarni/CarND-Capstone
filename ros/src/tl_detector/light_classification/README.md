@@ -22,6 +22,14 @@ python inference.py --image_dir ../data/sample/sim --model ssd_inception_v2_coco
 python inference.py --image_dir ../data/sample/sim --model ssd_mobilenet_v1_coco_2017_11_17
 ```
 
+**Examples on simulation data**
+![Alt text](data/sample/sim_1.png?raw=true "Simulation Example")
+![Alt text](data/sample/sim_2.png?raw=true "Simulation Example")
+
+**Examples on site data**
+![Alt text](data/sample/site_1.png?raw=true "Site Example")
+![Alt text](data/sample/site_2.png?raw=true "Site Example")
+
 #### Traffic light classification (simulator)
 
 This module assumes that we have the crop for traffic light (obtained from localization module) and we have to classify it in one of the following categories `['UNKNOWN', 'GREEN', 'YELLOW', 'RED']`.
