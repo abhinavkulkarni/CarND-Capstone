@@ -2,5 +2,8 @@
 
 build
 devel
+venv/
 
 profile.tmp
+*.iml
+.idea/
