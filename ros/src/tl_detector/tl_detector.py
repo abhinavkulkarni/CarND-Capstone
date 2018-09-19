@@ -15,7 +15,7 @@ from scipy.spatial import KDTree
 STATE_COUNT_THRESHOLD = 3
 
 class TLDetector(object):
-    def __init__(self):
+    def __init__(self, model):
         rospy.init_node('tl_detector')
 
         self.pose = None
@@ -44,7 +44,7 @@ class TLDetector(object):
         self.upcoming_red_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
 
         self.bridge = CvBridge()
-        self.light_classifier = TLClassifier()
+        self.light_classifier = TLClassifier(model)
         self.listener = tf.TransformListener()
 
         self.state = TrafficLight.UNKNOWN
@@ -59,7 +59,7 @@ class TLDetector(object):
 
     def waypoints_cb(self, waypoints):
         self.waypoints = waypoints
-        self.waypoints_2d = [[wp.pose.pose.position.x, 
+        self.waypoints_2d = [[wp.pose.pose.position.x,
                               wp.pose.pose.position.y] for wp in waypoints.waypoints]
         self.waypoint_tree = KDTree(self.waypoints_2d)
         self.base_waypoints_sub.unregister()
@@ -118,17 +118,16 @@ class TLDetector(object):
 
         Returns:
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
-
         """
-        return light.state
-#         if(not self.has_image):
-#             self.prev_light_loc = None
-#             return False
+    #         if(not self.has_image):
+    #             self.prev_light_loc = None
+    #             return False
 
-#         cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
+    #         cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
 
-#         #Get classification
-#         return self.light_classifier.get_classification(cv_image)
+    #         #Get classification
+    #         return self.light_classifier.get_classification(cv_image)
+        return self.light_classifier.get_classification(self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8"))
 
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its
@@ -141,7 +140,7 @@ class TLDetector(object):
         """
         closest_light = None
         line_wp_idx = None
-       
+
         # List of positions that correspond to the line to stop in front of for a given intersection
         stop_line_positions = self.config['stop_line_positions']
         if(self.pose):
@@ -157,8 +156,9 @@ class TLDetector(object):
                 diff = d
                 closest_light = light
                 line_wp_idx = temp_wp_idx
-                
+
         if closest_light:
+            # TODO: follow the path here to finally get the state
             state = self.get_light_state(closest_light)
             return line_wp_idx, state
 
@@ -166,6 +166,6 @@ class TLDetector(object):
 
 if __name__ == '__main__':
     try:
-        TLDetector()
+        TLDetector(model='./models/sim.h5')
     except rospy.ROSInterruptException:
         rospy.logerr('Could not start traffic node.')

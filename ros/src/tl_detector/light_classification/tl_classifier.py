@@ -1,8 +1,10 @@
 from styx_msgs.msg import TrafficLight
+from light_classification.scripts.tl_classifier import TLClassifier
 
 class TLClassifier(object):
-    def __init__(self):
+    def __init__(self, model):
         #TODO load classifier
+        self.classifier = TLClassifier(model)
         pass
 
     def get_classification(self, image):
@@ -16,4 +18,5 @@ class TLClassifier(object):
 
         """
         #TODO implement light color prediction
+
         return TrafficLight.UNKNOWN
