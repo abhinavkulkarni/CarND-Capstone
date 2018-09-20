@@ -24,9 +24,8 @@ CLASSES = ['Red', 'Yellow', 'Green', 'NoTrafficLight']
 
 
 class TLClassifier(object):
-    def __init__(self, model=''):
-        # TODO load classifier
-
+    def __init__(self, model=''):  # TODO: define default TLC model here
+        self.model = None
         if model is not None and len(model) > 0:
             self.model = load_model(model)
 
@@ -41,7 +40,6 @@ class TLClassifier(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
-        # TODO implement light color prediction
         image = image.resize((width, height), Image.ANTIALIAS)
         img_reshape = np.expand_dims(image, axis=0).astype('float32')
 
@@ -49,7 +47,10 @@ class TLClassifier(object):
         img_norm = img_reshape / 255.
 
         # Prediction
-        predict = self.model.predict(img_norm)
+        # TODO: dealing with nonexistant model after init ->
+        # TODO: (continues) should we raise an exception or just inform and shut the node down?
+        if self.model is not None:
+            predict = self.model.predict(img_norm)
         # print(predict)
         # Get color classification
 
