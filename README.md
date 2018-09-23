@@ -9,7 +9,7 @@ Our team name is **Vulcan/Braking Bad**.
 |Abhinav Kulkarni | abhinavkulkarni[AT]gmail.com |
 |Andrej Georgievski | andrej.zgeorgievski[AT]gmail.com |
 |Kamal Gupta | kamalgupta308[AT]gmail.com |
-|Praveen Gunasekaran | rajblesso2008[AT]gmail.com |
+|Praveen Gunasekaran | praveenraj49[AT]gmail.com |
 |Santosh Kumar | sanchelseaster[AT]gmail.com |
 
 ## Implementation
