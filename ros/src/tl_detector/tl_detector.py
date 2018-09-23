@@ -10,6 +10,7 @@ from light_classification.tl_classifier import TLClassifier
 import tf
 import cv2
 import yaml
+from os import getcwd
 from scipy.spatial import KDTree
 
 STATE_COUNT_THRESHOLD = 3
@@ -167,6 +168,7 @@ class TLDetector(object):
 
 if __name__ == '__main__':
     try:
-        TLDetector(model='./models/sim.h5')
+
+        TLDetector(model=getcwd() + '/light_classification/models/sim.h5')
     except rospy.ROSInterruptException:
         rospy.logerr('Could not start traffic node.')
