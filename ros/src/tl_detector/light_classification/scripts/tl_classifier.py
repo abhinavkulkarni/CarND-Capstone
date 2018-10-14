@@ -10,6 +10,10 @@ from keras.layers.core import Dropout
 from keras.callbacks import EarlyStopping
 from keras.optimizers import Adam
 from keras import metrics
+from random import seed
+
+from data_preparation import prepare_data
+
 from keras.preprocessing.image import ImageDataGenerator
 
 from keras.models import load_model
@@ -110,32 +114,42 @@ class TLClassifier(object):
         model.compile(loss="categorical_crossentropy", optimizer=opt,
                       metrics=[metrics.mae, metrics.categorical_accuracy])
 
-        datagen = ImageDataGenerator(validation_split=0.2,
-                                     # rescale=1. / 255,
-                                     # rotation_range=20.,
-                                     # width_shift_range=0.2,
-                                     # height_shift_range=0.2,
-                                     # shear_range=0.2,
-                                     # zoom_range=0.2,
-                                     # horizontal_flip=True,
+        # Split training/validation 80/20
+        # https://faroit.github.io/keras-docs/2.0.8/preprocessing/image/
+        prepare_data(data_location=data,
+                     train_data_path=data+'/train/',
+                     test_data_path=data+'/test/')
+
+        datagen = ImageDataGenerator(#validation_split=0.2,
+                                     rescale=1. / 255,
+                                     rotation_range=20.,
+                                     width_shift_range=0.2,
+                                     height_shift_range=0.2,
+                                     shear_range=0.2,
+                                     zoom_range=0.2,
+                                     horizontal_flip=True
                                      )
         train_gen = datagen.flow_from_directory(
-            data,
+            data+'/train/',
             classes=CLASSES,
             target_size=(height, width),
-            batch_size=batch_size,
-            subset='training'
+            batch_size=batch_size
         )
 
         val_gen = datagen.flow_from_directory(
-            data,
+            data+'/test/',
             classes=CLASSES,
-            target_size=(height, width),
-            subset='validation'
+            target_size=(height, width)
         )
 
         early_stopping = EarlyStopping(monitor='val_loss', patience=5)
-        info = model.fit_generator(train_gen, validation_data=val_gen, epochs=epochs, callbacks=[early_stopping])
+        info = model.fit_generator(train_gen,
+                                   steps_per_epoch=3,
+                                   validation_steps=2,
+                                   validation_data=val_gen,
+                                   epochs=epochs,
+                                   callbacks=[early_stopping]
+                                   )
 
         model.save(model_path)
 
