@@ -121,14 +121,6 @@ class TLDetector(object):
         Returns:
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
         """
-    #         if(not self.has_image):
-    #             self.prev_light_loc = None
-    #             return False
-
-    #         cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
-
-    #         #Get classification
-    #         return self.light_classifier.get_classification(cv_image)
         # TODO: Check if rgb or bgr is necessary
         return self.light_classifier.get_classification(self.bridge.imgmsg_to_cv2(self.camera_image, "rgb8"))
 
@@ -168,7 +160,6 @@ class TLDetector(object):
 
 if __name__ == '__main__':
     try:
-
         TLDetector(model=getcwd() + '/light_classification/models/sim.h5')
     except rospy.ROSInterruptException:
         rospy.logerr('Could not start traffic node.')

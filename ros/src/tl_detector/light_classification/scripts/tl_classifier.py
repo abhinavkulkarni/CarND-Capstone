@@ -21,14 +21,13 @@ from keras.models import load_model
 # import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-from PIL import Image
-
+import cv2
 
 CLASSES = ['Red', 'Yellow', 'Green', 'NoTrafficLight']
 
 
 class TLClassifier(object):
-    def __init__(self, model=''):  # TODO: define default TLC model here
+    def __init__(self, model=''):
         self.model = None
         if model is not None and len(model) > 0:
             self.model = load_model(model)
@@ -44,20 +43,14 @@ class TLClassifier(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
-        image = image.resize((width, height), Image.ANTIALIAS)
+        image = cv2.resize(image, (height, width), cv2.INTER_AREA)
         img_reshape = np.expand_dims(image, axis=0).astype('float32')
 
         # Normalization
         img_norm = img_reshape / 255.
 
         # Prediction
-        # TODO: dealing with nonexistant model after init ->
-        # TODO: (continues) should we raise an exception or just inform and shut the node down?
-        if self.model is not None:
-            predict = self.model.predict(img_norm)
-        # print(predict)
-        # Get color classification
-
+        predict = self.model.predict(img_norm)
         return CLASSES[np.argmax(predict)]
 
     @staticmethod
@@ -194,7 +187,7 @@ if __name__ == '__main__':
                         help="batch size")
 
     args = parser.parse_args()
-
+    
     if args.command == 'train':
         tl_classifier = TLClassifier()
         tl_classifier.train_model(args.dataset, args.model,
@@ -203,8 +196,7 @@ if __name__ == '__main__':
 
     elif args.command == 'test':
         tl_classifier = TLClassifier(args.model)
-        img = Image.open(args.image)
-        # img = np.asarray(img, dtype="uint8")
+        img = cv2.imread(args.image)
         print(tl_classifier.get_classification(img))
 
     else:
