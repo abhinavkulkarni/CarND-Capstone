@@ -18,7 +18,7 @@ from keras.preprocessing.image import ImageDataGenerator
 
 from keras.models import load_model
 
-# import tensorflow as tf
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
@@ -30,7 +30,14 @@ class TLClassifier(object):
     def __init__(self, model=''):
         self.model = None
         if model is not None and len(model) > 0:
+            print('X'*50)
+            print(model)
             self.model = load_model(model)
+            image_path = os.path.join(os.path.dirname(__file__), '001176.png')
+            img = cv2.imread(image_path)
+            _ = self.get_classification(img)
+            print('Loaded classification model')
+            print('X'*50)
 
     def get_classification(self, image, height=32, width=32):
         """Determines the color of the traffic light in the image

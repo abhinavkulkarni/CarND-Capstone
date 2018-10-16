@@ -8,6 +8,7 @@ from glob import glob
 from PIL import Image
 
 MODEL_CKPT_PATH = '../models'
+MODEL_CKPT_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'models')
 THRESHOLD = 0.25
 MIN_DETECTION_SIZE = 10
 
@@ -46,6 +47,9 @@ class TLDetector(object):
             self.scores = self.graph.get_tensor_by_name('detection_scores:0')
             self.classes = self.graph.get_tensor_by_name('detection_classes:0')
             self.num_detections = self.graph.get_tensor_by_name('num_detections:0')
+            print('*'*50)
+            print('Loaded SSD model')
+            print('*'*50)
 
     def get_detection(self, image, viz=False):
         """Determines the locations of the traffic light in the image
@@ -73,12 +77,12 @@ class TLDetector(object):
             # If there is no detection
             if idx is None:
                 box = [0, 0, 0, 0]
-                print('no detection!')
+#                 print('no detection!')
 
             # detection with less confidence
             elif scores[idx] <= THRESHOLD:
                 box = [0, 0, 0, 0]
-                print('low confidence:', scores[idx])
+#                 print('low confidence:', scores[idx])
 
             # If there is a detection and its confidence is high enough
             else:
@@ -93,11 +97,11 @@ class TLDetector(object):
                 # ignore if the box is too small
                 if (box_h < MIN_DETECTION_SIZE) or (box_w < MIN_DETECTION_SIZE):
                     box = [0, 0, 0, 0]
-                    print('box too small!', box_h, box_w)
+#                     print('box too small!', box_h, box_w)
 
                 else:
-                    print(box)
-                    print('localization confidence: ', scores[idx])
+#                     print(box)
+#                     print('localization confidence: ', scores[idx])
 
                     if viz:
                         cv2.rectangle(img, (box[1], box[0]),
