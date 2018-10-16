@@ -58,7 +58,7 @@ class TLDetector(object):
         self.loop()
         
     def loop(self):
-        rate = rospy.Rate(20)
+        rate = rospy.Rate(1) # TODO: Freeze the CNN/Traffic light classifier's graph? Test how far we can push this.
         while not rospy.is_shutdown():
             self.fun()
             rate.sleep()
