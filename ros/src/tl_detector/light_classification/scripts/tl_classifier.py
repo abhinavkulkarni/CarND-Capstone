@@ -12,15 +12,12 @@ from keras.optimizers import Adam
 from keras import metrics
 from random import seed
 
-from data_preparation import prepare_data
-
 from keras.preprocessing.image import ImageDataGenerator
 
 from keras.models import load_model
 
 import os
 import numpy as np
-import matplotlib.pyplot as plt
 import cv2
 
 CLASSES = ['Red', 'Yellow', 'Green', 'NoTrafficLight']
@@ -109,6 +106,9 @@ class TLClassifier(object):
 
     def train_model(self, data, model_path, plot='plot.png',
                     lr=1e-3, height=32, width=32, batch_size=32, epochs=50):
+        from data_preparation import prepare_data
+        import matplotlib.pyplot as plt
+
         model = self.build_model()
         opt = Adam(lr=lr)
         model.compile(loss="categorical_crossentropy", optimizer=opt,
