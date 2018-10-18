@@ -13,7 +13,7 @@ import yaml
 from os import getcwd
 from scipy.spatial import KDTree
 
-STATE_COUNT_THRESHOLD = 3
+STATE_COUNT_THRESHOLD = rospy.get_param('~state_count_threshold', 3)
 
 class TLDetector(object):
     def __init__(self, model):
@@ -58,11 +58,11 @@ class TLDetector(object):
         self.loop()
         
     def loop(self):
-        rate = rospy.Rate(1) # TODO: Freeze the CNN/Traffic light classifier's graph? Test how far we can push this.
+        # TODO: Freeze the CNN/Traffic light classifier's graph? Test how far we can push this.
+        rate = rospy.Rate(rospy.get_param('~rate', 1))
         while not rospy.is_shutdown():
             self.fun()
             rate.sleep()
-            
 
     def pose_cb(self, msg):
         self.pose = msg
@@ -176,6 +176,8 @@ class TLDetector(object):
 
 if __name__ == '__main__':
     try:
-        TLDetector(model=getcwd() + '/light_classification/models/sim.h5')
+        model_relative_path = rospy.get_param('~model_relative_path', '/light_classification/models/sim.h5')
+        print('Loading model from {path}...'.format(path=getcwd() + model_relative_path))
+        TLDetector(model=getcwd() + model_relative_path)
     except rospy.ROSInterruptException:
         rospy.logerr('Could not start traffic node.')

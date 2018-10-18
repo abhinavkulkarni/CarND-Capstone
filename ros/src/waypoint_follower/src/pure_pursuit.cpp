@@ -43,6 +43,9 @@ int main(int argc, char **argv)
   ros::NodeHandle nh;
   ros::NodeHandle private_nh("~");
 
+  int loop_rate_param;
+  nh.param("rate", loop_rate_param, LOOP_RATE);
+
   bool linear_interpolate_mode;
   private_nh.param("linear_interpolate_mode", linear_interpolate_mode, bool(true));
   ROS_INFO_STREAM("linear_interpolate_mode : " << linear_interpolate_mode);
@@ -63,7 +66,7 @@ int main(int argc, char **argv)
       nh.subscribe("current_velocity", 10, &waypoint_follower::PurePursuit::callbackFromCurrentVelocity, &pp);
 
   ROS_INFO("pure pursuit start");
-  ros::Rate loop_rate(LOOP_RATE);
+  ros::Rate loop_rate(loop_rate_param);
   while (ros::ok())
   {
     ros::spinOnce();
