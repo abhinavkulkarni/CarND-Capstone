@@ -8,7 +8,6 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from light_classification.tl_classifier import TLClassifier
 import tf
-import cv2
 import yaml
 from os import getcwd
 from scipy.spatial import KDTree
@@ -176,7 +175,7 @@ class TLDetector(object):
 
 if __name__ == '__main__':
     try:
-        model_relative_path = rospy.get_param('~model_relative_path', '/light_classification/models/sim.h5')
+        model_relative_path = rospy.get_param('~model_relative_path', '/light_classification/models/classifier')
         print('Loading model from {path}...'.format(path=getcwd() + model_relative_path))
         TLDetector(model=getcwd() + model_relative_path)
     except rospy.ROSInterruptException:

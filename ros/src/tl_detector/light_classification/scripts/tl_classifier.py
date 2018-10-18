@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import tensorflow as tf
 from keras.models import Sequential
 from keras.layers.convolutional import Conv2D
 from keras.layers.convolutional import MaxPooling2D
@@ -10,31 +11,40 @@ from keras.layers.core import Dropout
 from keras.callbacks import EarlyStopping
 from keras.optimizers import Adam
 from keras import metrics
-from random import seed
-
 from keras.preprocessing.image import ImageDataGenerator
 
-from keras.models import load_model
 
 import os
 import numpy as np
-import cv2
+from PIL import Image
 
 CLASSES = ['Red', 'Yellow', 'Green', 'NoTrafficLight']
 
 
 class TLClassifier(object):
-    def __init__(self, model=''):
-        self.model = None
-        if model is not None and len(model) > 0:
-            print('X'*50)
-            print(model)
-            self.model = load_model(model)
-            image_path = os.path.join(os.path.dirname(__file__), '001176.png')
-            img = cv2.imread(image_path)
-            _ = self.get_classification(img)
-            print('Loaded classification model')
-            print('X'*50)
+    def __init__(self, model_dir=''):
+        self.graph = tf.Graph()
+
+        # configuration for possible GPU
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+
+        self.sess = tf.Session(graph=self.graph, config=config)
+        with self.graph.as_default():
+            graph_def = tf.GraphDef()
+
+
+            with tf.gfile.GFile(os.path.join(model_dir, 'model_frozen.pb'), 'rb') as f:
+                serialized_graph = f.read()
+                graph_def.ParseFromString(serialized_graph)
+                tf.import_graph_def(graph_def, name='')
+
+            self.image_tensor = self.graph.get_tensor_by_name('conv1_input:0')
+            self.output_tensor = self.graph.get_tensor_by_name('softmax/Softmax:0')
+
+        print('*' * 50)
+        print('Loaded CNN model')
+        print('*' * 50)
 
     def get_classification(self, image, height=32, width=32):
         """Determines the color of the traffic light in the image
@@ -47,14 +57,16 @@ class TLClassifier(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
-        image = cv2.resize(image, (height, width), cv2.INTER_AREA)
+        image = image.resize((width, height), Image.ANTIALIAS)
+        image = np.array(image)
         img_reshape = np.expand_dims(image, axis=0).astype('float32')
 
         # Normalization
         img_norm = img_reshape / 255.
 
         # Prediction
-        predict = self.model.predict(img_norm)
+        # predict = self.model.predict(img_norm)
+        predict = self.sess.run(self.output_tensor, feed_dict={self.image_tensor: img_norm})
         return CLASSES[np.argmax(predict)]
 
     @staticmethod
@@ -77,7 +89,7 @@ class TLClassifier(object):
         input_shape = (height, width, channels)
 
         # first set of CONV => RELU => POOL layers
-        model.add(Conv2D(32, (3, 3), input_shape=input_shape, padding='same'))
+        model.add(Conv2D(32, (3, 3), input_shape=input_shape, padding='same', name='conv1'))
         model.add(Activation('relu'))
         model.add(MaxPooling2D(pool_size=(2, 2)))
 
@@ -97,7 +109,7 @@ class TLClassifier(object):
         model.add(Activation('relu'))
         model.add(Dropout(0.5))
         model.add(Dense(n_classes))
-        model.add(Activation('softmax'))
+        model.add(Activation('softmax', name='softmax'))
 
         # return the constructed network architecture
         print("Model Summary")
@@ -151,7 +163,7 @@ class TLClassifier(object):
                                    callbacks=[early_stopping]
                                    )
 
-        model.save(model_path)
+        model.save(os.path.join(model_path, 'model.h5'))
 
         # plot the training loss and accuracy
         plt.style.use("ggplot")
@@ -179,7 +191,7 @@ if __name__ == '__main__':
                         help="'train' or 'test'")
     parser.add_argument("-d", "--dataset", default='../data/tl_classifier_exceptsmall/simulator',
                         help="path to dataset")
-    parser.add_argument("-m", "--model", default='../models/sim.h5',
+    parser.add_argument("-m", "--model-dir", default='../models/classifier',
                         help="path to output model")
     parser.add_argument("-p", "--plot", default="plot.png",
                         help="path to output loss/accuracy plot")
@@ -197,13 +209,13 @@ if __name__ == '__main__':
     
     if args.command == 'train':
         tl_classifier = TLClassifier()
-        tl_classifier.train_model(args.dataset, args.model,
+        tl_classifier.train_model(args.dataset, args.output_dir,
                                   lr=args.lr, batch_size=args.batch,
                                   plot=args.plot)
 
     elif args.command == 'test':
-        tl_classifier = TLClassifier(args.model)
-        img = cv2.imread(args.image)
+        tl_classifier = TLClassifier(args.model_dir)
+        img = Image.open(args.image)
         print(tl_classifier.get_classification(img))
 
     else:

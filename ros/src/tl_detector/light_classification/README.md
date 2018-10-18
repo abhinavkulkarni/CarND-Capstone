@@ -89,12 +89,12 @@ cd scripts
 # Training
 python tl_classifier.py train \
     --dataset ../data/tl_classifier_exceptsmall/simulator
-    --model ./models/sim.h5
+    --model-dir ../models/classifier
 
 # Inference
 python tl_classifier.py test \
     --image ../data/tl_classifier_exceptsmall/simulator/Green/001176.png
-    --model ./models/sim.h5
+    --model ../models/classifier
 ```
 
 

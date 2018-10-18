@@ -1,0 +1,2 @@
+model_checkpoint_path: "/home/abhinav/Documents/CarND-Capstone/ros/src/tl_detector/light_classification/models/classifier/model"
+all_model_checkpoint_paths: "/home/abhinav/Documents/CarND-Capstone/ros/src/tl_detector/light_classification/models/classifier/model"

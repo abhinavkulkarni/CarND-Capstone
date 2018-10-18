@@ -1,6 +1,7 @@
 from styx_msgs.msg import TrafficLight
 from scripts.tl_classifier import TLClassifier as tlc
 from scripts.tl_detector import TLDetector as tld
+from PIL import Image
 
 CLASSES = ['Red', 'Yellow', 'Green', 'NoTrafficLight']
 
@@ -32,7 +33,7 @@ class TLClassifier(object):
             return TrafficLight.UNKNOWN
         else:
             cropped_image = image[bbox[0]:bbox[2], bbox[1]:bbox[3]]
-#             return TrafficLight.GREEN
+            cropped_image = Image.fromarray(cropped_image)
             result = self.classifier.get_classification(cropped_image)
             return self.classifier_dict[result]
         return CLASSES[3]
