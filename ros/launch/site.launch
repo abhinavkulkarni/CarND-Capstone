@@ -21,6 +21,9 @@
     <!--Camera Calibration YAML -->
     <param name="grasshopper_calibration_yaml" textfile="$(find styx)../../../data/grasshopper_calibration.yml" />
 
+    <!--Environment -->
+    <param name="env" value="site" />
+
     <!--Camera Info Publisher -->
     <include file="$(find camera_info_publisher)/launch/camera_info_publisher.launch"/>
 </launch>
