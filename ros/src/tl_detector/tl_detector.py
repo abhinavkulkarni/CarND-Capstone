@@ -8,25 +8,26 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from light_classification.tl_classifier import TLClassifier
 import tf
-import cv2
 import yaml
+from os import getcwd
 from scipy.spatial import KDTree
 
-STATE_COUNT_THRESHOLD = 3
+STATE_COUNT_THRESHOLD = rospy.get_param('~state_count_threshold', 3)
 
 class TLDetector(object):
-    def __init__(self):
+    def __init__(self, model):
         rospy.init_node('tl_detector')
 
         self.pose = None
         self.waypoints = None
         self.waypoints_2d = None
+        self.has_image = False
         self.waypoint_tree = None
         self.camera_image = None
         self.lights = []
 
-        _ = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
-        self.base_waypoints_sub = rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
+        self.current_pose_sub = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb, queue_size=1)
+        self.base_waypoints_sub = rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb, queue_size=1)
 
         '''
         /vehicle/traffic_lights provides you with the location of the traffic light in 3D map space and
@@ -35,16 +36,14 @@ class TLDetector(object):
         simulator. When testing on the vehicle, the color state will not be available. You'll need to
         rely on the position of the light and the camera image to predict it.
         '''
-        sub3 = rospy.Subscriber('/vehicle/traffic_lights', TrafficLightArray, self.traffic_cb)
-        sub6 = rospy.Subscriber('/image_color', Image, self.image_cb)
-
+        
         config_string = rospy.get_param("/traffic_light_config")
         self.config = yaml.load(config_string)
 
         self.upcoming_red_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
 
         self.bridge = CvBridge()
-        self.light_classifier = TLClassifier()
+        self.light_classifier = TLClassifier(model)
         self.listener = tf.TransformListener()
 
         self.state = TrafficLight.UNKNOWN
@@ -52,22 +51,38 @@ class TLDetector(object):
         self.last_wp = -1
         self.state_count = 0
 
-        rospy.spin()
+        sub3 = rospy.Subscriber('/vehicle/traffic_lights', TrafficLightArray, self.traffic_cb, queue_size=1)
+        self.image_sub = rospy.Subscriber('/image_color', Image, self.image_cb, queue_size=1)
+
+        self.loop()
+        
+    def loop(self):
+        # TODO: Freeze the CNN/Traffic light classifier's graph? Test how far we can push this.
+        rate = rospy.Rate(rospy.get_param('~rate', 1))
+        while not rospy.is_shutdown():
+            self.fun()
+            rate.sleep()
 
     def pose_cb(self, msg):
         self.pose = msg
 
     def waypoints_cb(self, waypoints):
         self.waypoints = waypoints
-        self.waypoints_2d = [[wp.pose.pose.position.x, 
+        self.waypoints_2d = [[wp.pose.pose.position.x,
                               wp.pose.pose.position.y] for wp in waypoints.waypoints]
         self.waypoint_tree = KDTree(self.waypoints_2d)
         self.base_waypoints_sub.unregister()
 
+        
     def traffic_cb(self, msg):
         self.lights = msg.lights
-
+        
+    
     def image_cb(self, msg):
+        self.has_image = True
+        self.camera_image = msg
+
+    def fun(self):
         """Identifies red lights in the incoming camera image and publishes the index
             of the waypoint closest to the red light's stop line to /traffic_waypoint
 
@@ -75,8 +90,8 @@ class TLDetector(object):
             msg (Image): image from car-mounted camera
 
         """
-        self.has_image = True
-        self.camera_image = msg
+        if not self.has_image:
+            return
         light_wp, state = self.process_traffic_lights()
 
         '''
@@ -118,17 +133,11 @@ class TLDetector(object):
 
         Returns:
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
-
         """
-        return light.state
-#         if(not self.has_image):
-#             self.prev_light_loc = None
-#             return False
-
-#         cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
-
-#         #Get classification
-#         return self.light_classifier.get_classification(cv_image)
+        # TODO: Check if rgb or bgr is necessary
+#         return light.state
+        cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "rgb8")
+        return self.light_classifier.get_classification(cv_image)
 
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its
@@ -137,11 +146,10 @@ class TLDetector(object):
         Returns:
             int: index of waypoint closes to the upcoming stop line for a traffic light (-1 if none exists)
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
-
         """
         closest_light = None
         line_wp_idx = None
-       
+
         # List of positions that correspond to the line to stop in front of for a given intersection
         stop_line_positions = self.config['stop_line_positions']
         if(self.pose):
@@ -153,19 +161,22 @@ class TLDetector(object):
             line = stop_line_positions[i]
             temp_wp_idx = self.get_closest_waypoint(line[0], line[1])
             d = temp_wp_idx - car_wp_idx
-            if d>=0 and d<diff:
+            if 0 <= d < diff:
                 diff = d
                 closest_light = light
                 line_wp_idx = temp_wp_idx
-                
+
         if closest_light:
             state = self.get_light_state(closest_light)
             return line_wp_idx, state
 
         return -1, TrafficLight.UNKNOWN
 
+
 if __name__ == '__main__':
     try:
-        TLDetector()
+        model_relative_path = rospy.get_param('~model_relative_path', '/light_classification/models/classifier')
+        print('Loading model from {path}...'.format(path=getcwd() + model_relative_path))
+        TLDetector(model=getcwd() + model_relative_path)
     except rospy.ROSInterruptException:
         rospy.logerr('Could not start traffic node.')

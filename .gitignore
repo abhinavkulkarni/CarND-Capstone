@@ -2,5 +2,10 @@
 
 build
 devel
+venv/
 
 profile.tmp
+*.iml
+.idea/
+
+ros/src/tl_detector/light_classification/data/tl_classifier_exceptsmall/

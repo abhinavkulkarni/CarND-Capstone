@@ -1,4 +1,8 @@
 <?xml version="1.0"?>
 <launch>
-    <node pkg="tl_detector" type="tl_detector.py" name="tl_detector" output="screen" cwd="node"/>
+    <node pkg="tl_detector" type="tl_detector.py" name="tl_detector" output="screen" cwd="node">
+        <param name="rate" value="1" />
+        <param name="state_count_threshold" value="3" />
+        <param name="model_relative_path" value="/light_classification/models/classifier" />
+    </node>
 </launch>
